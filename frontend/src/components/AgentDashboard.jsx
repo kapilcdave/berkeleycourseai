@@ -78,12 +78,12 @@ export default function AgentDashboard({ agentStates, parsedProfile }) {
                 <div style={{
                   fontFamily: 'var(--font-mono)',
                   fontSize: '0.6rem',
-                  color: 'var(--text-secondary)',
+                  color: 'var(--cyan-signal)',
                   textTransform: 'uppercase',
                   letterSpacing: '0.14em',
                   marginBottom: 6,
                 }}>
-                  Live pipeline
+                  Live multi-agent graph
                 </div>
                 <h2 style={{
                   fontFamily: 'var(--font-display)',
@@ -92,7 +92,7 @@ export default function AgentDashboard({ agentStates, parsedProfile }) {
                   lineHeight: 1,
                   color: 'var(--text-primary)',
                 }}>
-                  Schedule orchestration
+                  Requirement-aware schedule assembly
                 </h2>
               </div>
 
@@ -137,6 +137,32 @@ export default function AgentDashboard({ agentStates, parsedProfile }) {
                 label="Profile"
                 value={parsedProfile ? `${parsedProfile.major} · ${parsedProfile.catalogYear}` : 'Waiting for intake'}
               />
+            </div>
+
+            <div style={{
+              border: '1px solid rgba(255,255,255,0.06)',
+              borderRadius: 16,
+              background: 'rgba(255,255,255,0.025)',
+              padding: '12px 14px',
+              marginBottom: 14,
+            }}>
+              <div style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: '0.58rem',
+                color: 'var(--text-secondary)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.12em',
+                marginBottom: 6,
+              }}>
+                What the graph is doing
+              </div>
+              <div style={{
+                fontSize: '0.84rem',
+                color: 'var(--text-secondary)',
+                lineHeight: 1.65,
+              }}>
+                Intake normalizes the PDF, planning agents prune the catalog, evidence agents attach quality and conflict signals, and the composer turns the surviving candidates into a schedule-shaped result.
+              </div>
             </div>
 
             <div style={{ display: 'grid', gap: 10 }}>

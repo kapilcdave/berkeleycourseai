@@ -47,7 +47,7 @@ export default function Header({ phase, parsedProfile, onReset }) {
             color: 'var(--california-gold)',
             letterSpacing: '-0.02em',
           }}>
-            Bear
+            BearCourses
           </span>
           <span style={{
             fontFamily: 'var(--font-mono)',
@@ -56,7 +56,7 @@ export default function Header({ phase, parsedProfile, onReset }) {
             letterSpacing: '0.14em',
             textTransform: 'uppercase',
           }}>
-            Course Planner
+            AI Course Planner
           </span>
         </button>
       </div>
