@@ -1,0 +1,11 @@
+{
+  "name": "berkeley-course-ai-api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.27.0",
+    "formidable": "^3.5.1",
+    "pdf-parse": "^1.1.1"
+  }
+}
