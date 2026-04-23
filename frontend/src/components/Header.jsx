@@ -1,24 +1,31 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 export default function Header({ phase, parsedProfile, onReset }) {
-  const [tick, setTick] = useState(true)
+  const [timeLabel, setTimeLabel] = useState(() => formatTime())
 
   useEffect(() => {
-    const t = setInterval(() => setTick(v => !v), 800)
+    const t = setInterval(() => setTimeLabel(formatTime()), 1000)
     return () => clearInterval(t)
   }, [])
+
+  const phaseLabel = phase === 'input' ? 'Ready' : phase === 'running' ? 'Analyzing' : 'Complete'
+  const phaseColor = phase === 'running'
+    ? 'var(--california-gold)'
+    : phase === 'results'
+      ? 'var(--green-signal)'
+      : 'var(--cyan-signal)'
 
   return (
     <header style={{
       borderBottom: '1px solid var(--border)',
-      padding: '20px 24px',
+      padding: '18px 24px',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
       position: 'sticky',
       top: 0,
-      background: 'rgba(8,9,12,0.92)',
-      backdropFilter: 'blur(12px)',
+      background: 'rgba(8, 17, 26, 0.84)',
+      backdropFilter: 'blur(18px)',
       zIndex: 100,
     }}>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 16 }}>
@@ -36,20 +43,20 @@ export default function Header({ phase, parsedProfile, onReset }) {
         >
           <span style={{
             fontFamily: 'var(--font-display)',
-            fontSize: '1.5rem',
+            fontSize: '1.32rem',
             color: 'var(--california-gold)',
             letterSpacing: '-0.02em',
           }}>
-            BearCourses
+            Bear
           </span>
           <span style={{
             fontFamily: 'var(--font-mono)',
-            fontSize: '0.65rem',
+            fontSize: '0.6rem',
             color: 'var(--text-secondary)',
-            letterSpacing: '0.12em',
+            letterSpacing: '0.14em',
             textTransform: 'uppercase',
           }}>
-            UC Berkeley · Course Intelligence
+            Course Planner
           </span>
         </button>
       </div>
@@ -69,38 +76,67 @@ export default function Header({ phase, parsedProfile, onReset }) {
           </div>
         )}
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '8px 12px',
+          borderRadius: 999,
+          border: '1px solid var(--border)',
+          background: 'rgba(255,255,255,0.02)',
+        }}>
           <span style={{
-            width: 6, height: 6, borderRadius: '50%',
-            background: phase === 'running'
-              ? 'var(--california-gold)'
-              : phase === 'results'
-              ? 'var(--green-signal)'
-              : 'var(--text-secondary)',
+            width: 7,
+            height: 7,
+            borderRadius: '50%',
+            background: phaseColor,
             display: 'inline-block',
-            animation: phase === 'running' ? 'pulse-gold 1s infinite' : 'none',
+            animation: phase === 'running' ? 'pulse-soft 1.4s infinite' : 'none',
           }} />
           <span style={{
             fontFamily: 'var(--font-mono)',
             fontSize: '0.65rem',
-            color: 'var(--text-secondary)',
+            color: phase === 'input' ? 'var(--text-primary)' : phaseColor,
             textTransform: 'uppercase',
             letterSpacing: '0.1em',
           }}>
-            {phase === 'input' ? 'Ready' : phase === 'running' ? 'Analyzing' : 'Complete'}
+            {phaseLabel}
           </span>
         </div>
 
-        <span style={{
-          fontFamily: 'var(--font-mono)',
-          fontSize: '0.65rem',
-          color: 'var(--border-bright)',
-          opacity: tick ? 1 : 0,
-          transition: 'opacity 0.1s',
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-end',
+          gap: 2,
         }}>
-          {new Date().toLocaleTimeString('en-US', { hour12: false })}
-        </span>
+          <span style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: '0.58rem',
+            color: 'var(--text-secondary)',
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+          }}>
+            Local time
+          </span>
+          <span style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: '0.7rem',
+            color: 'var(--text-primary)',
+          }}>
+            {timeLabel}
+          </span>
+        </div>
       </div>
     </header>
   )
+}
+
+function formatTime() {
+  return new Date().toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  })
 }

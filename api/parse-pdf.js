@@ -17,9 +17,28 @@ export default async function handler(req, res) {
 
     if (!pdfFile) return res.status(400).json({ error: 'No PDF uploaded' })
 
+    if (!process.env.ANTHROPIC_API_KEY) {
+      return res.status(503).json({
+        code: 'anthropic_api_key_missing',
+        error: 'Anthropic API key is not configured.',
+        userMessage: 'Add `ANTHROPIC_API_KEY` in your local environment before running PDF analysis.',
+        silent: true,
+      })
+    }
+
     // Extract text from PDF
     const pdfBuffer = fs.readFileSync(pdfFile.filepath)
-    const pdfData = await pdfParse(pdfBuffer)
+    let pdfData
+    try {
+      pdfData = await pdfParse(pdfBuffer)
+    } catch {
+      return res.status(400).json({
+        code: 'pdf_parse_failed',
+        error: 'The uploaded file could not be parsed as a CalCentral PDF.',
+        userMessage: 'That PDF could not be read cleanly. Re-download the Degree Progress PDF from CalCentral and try again.',
+        silent: true,
+      })
+    }
     const rawText = pdfData.text
 
     // Use Claude to parse the degree progress text

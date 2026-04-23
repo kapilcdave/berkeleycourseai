@@ -12,6 +12,7 @@ export default function App() {
   const [agentStates, setAgentStates] = useState({})
   const [results, setResults] = useState(null)
   const [parsedProfile, setParsedProfile] = useState(null)
+  const [submitError, setSubmitError] = useState('')
 
   const updateAgent = useCallback((agentId, update) => {
     setAgentStates(prev => ({
@@ -21,9 +22,11 @@ export default function App() {
   }, [])
 
   const handleSubmit = useCallback(async ({ pdfFile, major, targetUnits, semester, calcentralCookie }) => {
+    setSubmitError('')
     setPhase(PHASE.RUNNING)
     setAgentStates({})
     setResults(null)
+    setParsedProfile(null)
 
     try {
       const finalResults = await runPipeline({
@@ -39,7 +42,8 @@ export default function App() {
       setPhase(PHASE.RESULTS)
     } catch (err) {
       console.error('Pipeline error:', err)
-      updateAgent('orchestrator', { status: 'error', error: err.message })
+      setSubmitError(err.userMessage || err.message || 'The analysis could not start.')
+      setPhase(PHASE.INPUT)
     }
   }, [updateAgent])
 
@@ -48,6 +52,7 @@ export default function App() {
     setAgentStates({})
     setResults(null)
     setParsedProfile(null)
+    setSubmitError('')
   }, [])
 
   return (
@@ -56,7 +61,7 @@ export default function App() {
 
       <main style={{ flex: 1, padding: '0 24px 48px' }}>
         {phase === PHASE.INPUT && (
-          <InputPanel onSubmit={handleSubmit} />
+          <InputPanel onSubmit={handleSubmit} errorMessage={submitError} />
         )}
         {phase === PHASE.RUNNING && (
           <AgentDashboard agentStates={agentStates} parsedProfile={parsedProfile} />

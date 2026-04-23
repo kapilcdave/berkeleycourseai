@@ -24,7 +24,7 @@ export async function runPipeline({
   let profile
   try {
     const res = await fetch(API('parse-pdf'), { method: 'POST', body: pdfFormData })
-    if (!res.ok) throw new Error(await res.text())
+    if (!res.ok) throw await toPipelineError(res, 'We could not parse that PDF yet.')
     profile = await res.json()
     onAgentUpdate('parse-pdf', {
       status: 'done',
@@ -33,7 +33,10 @@ export async function runPipeline({
     })
     onProfileParsed(profile)
   } catch (err) {
-    onAgentUpdate('parse-pdf', { status: 'error', message: err.message })
+    onAgentUpdate('parse-pdf', {
+      status: err.silent ? 'skipped' : 'error',
+      message: err.message,
+    })
     throw err
   }
 
@@ -135,7 +138,7 @@ export async function runPipeline({
     const hasConflict = conflictData[course.courseCode] ?? false
     const reddit = redditData[course.courseCode] ?? {}
 
-    const score = computeScore({ course, bt, prof, hasConflict, reddit })
+    const score = computeScore({ course, bt, prof, hasConflict, reddit, targetUnits })
 
     return {
       ...course,
@@ -205,7 +208,7 @@ function buildCandidateList({ allCourses, requirementMap, completedCourses }) {
   }
 }
 
-function computeScore({ course, bt, prof, hasConflict, reddit }) {
+function computeScore({ course, bt, prof, hasConflict, reddit, targetUnits }) {
   if (hasConflict) return 0 // Hard filter
 
   let score = 50 // base
@@ -225,8 +228,8 @@ function computeScore({ course, bt, prof, hasConflict, reddit }) {
   // Reddit sentiment (-5 to +5 pts)
   if (reddit.sentiment != null) score += reddit.sentiment * 5
 
-  // Units proximity to ideal (soft, small effect)
-  const idealUnits = 4
+  // Units proximity to selected semester load, approximated per course
+  const idealUnits = Math.max(1, Math.min(5, (targetUnits || 16) / 4))
   const unitDiff = Math.abs((course.units ?? idealUnits) - idealUnits)
   score -= unitDiff * 1
 
@@ -241,7 +244,7 @@ async function fetchRequirements({ major, catalogYear }) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ major, catalogYear }),
   })
-  if (!res.ok) throw new Error(await res.text())
+  if (!res.ok) throw await toPipelineError(res, 'Requirements lookup failed.')
   return res.json()
 }
 
@@ -251,7 +254,7 @@ async function fetchCourses({ semester }) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ semester }),
   })
-  if (!res.ok) throw new Error(await res.text())
+  if (!res.ok) throw await toPipelineError(res, 'Course inventory fetch failed.')
   return res.json()
 }
 
@@ -261,7 +264,7 @@ async function fetchBerkeleyTime({ courseCodes }) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ courseCodes }),
   })
-  if (!res.ok) throw new Error(await res.text())
+  if (!res.ok) throw await toPipelineError(res, 'Berkeleytime lookup failed.')
   return res.json()
 }
 
@@ -271,7 +274,7 @@ async function fetchRMP({ professors }) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ professors }),
   })
-  if (!res.ok) throw new Error(await res.text())
+  if (!res.ok) throw await toPipelineError(res, 'Professor lookup failed.')
   return res.json()
 }
 
@@ -281,7 +284,7 @@ async function fetchScheduler({ calcentralCookie, candidates }) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ calcentralCookie, candidates }),
   })
-  if (!res.ok) throw new Error(await res.text())
+  if (!res.ok) throw await toPipelineError(res, 'Conflict check failed.')
   return res.json()
 }
 
@@ -296,6 +299,23 @@ async function fetchReddit({ candidates }) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ courses }),
   })
-  if (!res.ok) throw new Error(await res.text())
+  if (!res.ok) throw await toPipelineError(res, 'Community search failed.')
   return res.json()
+}
+
+async function toPipelineError(res, fallbackMessage) {
+  let data = null
+
+  try {
+    const text = await res.text()
+    data = text ? JSON.parse(text) : null
+  } catch {
+    data = null
+  }
+
+  const err = new Error(data?.error || fallbackMessage)
+  err.code = data?.code
+  err.silent = Boolean(data?.silent)
+  err.userMessage = data?.userMessage || err.message || fallbackMessage
+  return err
 }
