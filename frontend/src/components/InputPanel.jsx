@@ -1,6 +1,22 @@
 import { useState, useRef } from 'react'
 
 const SEMESTERS = ['Fall 2025', 'Spring 2026', 'Summer 2026', 'Fall 2026']
+const PREVIEW_ROWS = [
+  [
+    { key: 'profile', name: 'Student Profile', detail: 'parse PDF + completed units', status: 'running' },
+  ],
+  [
+    { key: 'requirements', name: 'Requirement Planner', detail: 'map unmet requirements', status: 'ready' },
+    { key: 'catalog', name: 'Course Catalog', detail: 'load semester offerings', status: 'running' },
+  ],
+  [
+    { key: 'professors', name: 'Professor Signal', detail: 'blend GPA + rating signal', status: 'queued' },
+    { key: 'scheduler', name: 'Schedule Check', detail: 'validate conflicts + load', status: 'queued' },
+  ],
+  [
+    { key: 'composer', name: 'Schedule Composer', detail: 'rank the final schedule', status: 'queued' },
+  ],
+]
 
 export default function InputPanel({ onSubmit }) {
   const [pdfFile, setPdfFile] = useState(null)
@@ -32,14 +48,16 @@ export default function InputPanel({ onSubmit }) {
       <div style={{ marginBottom: 56, textAlign: 'center' }}>
         <h1 style={{
           fontFamily: 'var(--font-display)',
-          fontSize: 'clamp(2.4rem, 5.5vw, 3.8rem)',
+          fontSize: 'clamp(2.4rem, 5.5vw, 4rem)',
           color: 'var(--text-primary)',
-          lineHeight: 1.08,
-          letterSpacing: '-0.03em',
+          lineHeight: 1.02,
+          letterSpacing: '-0.04em',
           marginBottom: 18,
+          textTransform: 'lowercase',
         }}>
-          Find your perfect<br />
-          <em style={{ color: 'var(--california-gold)' }}>next semester.</em>
+          optimize your class schedule
+          <br />
+          <em style={{ color: 'var(--california-gold)' }}>with ai agents</em>
         </h1>
         <p style={{
           fontFamily: 'var(--font-mono)',
@@ -164,6 +182,76 @@ export default function InputPanel({ onSubmit }) {
       }}>
         {isReady ? '→  Launch Analysis' : 'Upload PDF and enter your major to continue'}
       </button>
+
+      <div style={{
+        marginTop: 28,
+        border: '1px solid var(--line-soft)',
+        borderRadius: 18,
+        background: 'rgba(255,255,255,0.02)',
+        padding: '18px 14px 20px',
+      }}>
+        <div style={{ textAlign: 'center', marginBottom: 16 }}>
+          <div style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: '0.62rem',
+            color: 'var(--text-secondary)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.1em',
+            marginBottom: 8,
+          }}>
+            Six agents in action
+          </div>
+          <p style={{
+            fontSize: '0.82rem',
+            color: 'var(--text-secondary)',
+            lineHeight: 1.7,
+            maxWidth: 520,
+            margin: '0 auto',
+          }}>
+            Your uploaded data flows downward through the planner, fans out into specialized checks, then collapses into one schedule recommendation.
+          </p>
+        </div>
+
+        <div style={{ display: 'grid', gap: 10, justifyItems: 'center' }}>
+          <PipelineBox
+            name="Your Input"
+            detail="pdf + major + semester + target units"
+            status={isReady ? 'ready' : 'waiting'}
+            accent="var(--california-gold)"
+            width={260}
+          />
+
+          <TreeConnector width="74%" branches={1} />
+
+          {PREVIEW_ROWS.map((row, index) => (
+            <div key={row.map((node) => node.key).join('-')} style={{ width: '100%', display: 'grid', gap: 10, justifyItems: 'center' }}>
+              <div style={{
+                width: '100%',
+                display: 'grid',
+                gridTemplateColumns: `repeat(${row.length}, minmax(0, 1fr))`,
+                gap: 12,
+              }}>
+                {row.map((node) => (
+                  <PipelineBox
+                    key={node.key}
+                    name={node.name}
+                    detail={node.detail}
+                    status={node.status}
+                  />
+                ))}
+              </div>
+
+              {index < PREVIEW_ROWS.length - 1 && (
+                <TreeConnector
+                  width={index === 0 ? '76%' : '88%'}
+                  branches={PREVIEW_ROWS[index + 1].length}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
       <p style={{ textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: '0.6rem', color: 'var(--text-secondary)', opacity: 0.5, marginTop: 14, lineHeight: 1.7 }}>
         PDF processed in-memory, never stored. Session cookie only used for conflict checking.
       </p>
@@ -204,4 +292,125 @@ function Select({ children, ...props }) {
       {children}
     </select>
   )
+}
+
+function PipelineBox({ name, detail, status, accent = 'var(--blue-signal)', width }) {
+  const tone = statusTone(status)
+  const resolvedWidth = width ? `${width}px` : '100%'
+  const resolvedMaxWidth = width ? `${width}px` : '220px'
+
+  return (
+    <div style={{
+      width: resolvedWidth,
+      maxWidth: resolvedMaxWidth,
+      minHeight: 104,
+      borderRadius: 14,
+      padding: '14px 14px 12px',
+      background: 'var(--bg-card)',
+      border: `1px solid ${tone.border}`,
+      boxShadow: status === 'running' ? '0 0 0 1px rgba(253, 181, 21, 0.05)' : 'none',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 10 }}>
+        <span style={{
+          width: 9,
+          height: 9,
+          borderRadius: '50%',
+          background: status === 'waiting' ? accent : tone.color,
+          display: 'inline-block',
+          animation: status === 'running' ? 'pulse-soft 1.4s infinite' : 'none',
+        }} />
+        <span style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: '0.56rem',
+          color: tone.color,
+          textTransform: 'uppercase',
+          letterSpacing: '0.08em',
+        }}>
+          {status}
+        </span>
+      </div>
+
+      <div style={{ fontSize: '0.86rem', color: 'var(--text-primary)', marginBottom: 6, lineHeight: 1.3 }}>
+        {name}
+      </div>
+      <div style={{
+        fontFamily: 'var(--font-mono)',
+        fontSize: '0.6rem',
+        color: 'var(--text-secondary)',
+        lineHeight: 1.65,
+      }}>
+        {detail}
+      </div>
+    </div>
+  )
+}
+
+function TreeConnector({ width, branches }) {
+  const positions = Array.from({ length: branches }, (_, index) => {
+    if (branches === 1) return 50
+    return 14 + (72 * index) / (branches - 1)
+  })
+
+  return (
+    <div style={{ position: 'relative', width, height: 28 }}>
+      <div style={{
+        position: 'absolute',
+        left: '50%',
+        top: 0,
+        width: 1,
+        height: 12,
+        background: 'var(--line-strong)',
+        transform: 'translateX(-50%)',
+      }} />
+      <div style={{
+        position: 'absolute',
+        left: `${positions[0]}%`,
+        right: `${100 - positions[positions.length - 1]}%`,
+        top: 12,
+        height: 1,
+        background: 'var(--line-strong)',
+      }} />
+      {positions.map((position) => (
+        <div
+          key={position}
+          style={{
+            position: 'absolute',
+            left: `${position}%`,
+            top: 12,
+            width: 1,
+            height: 16,
+            background: 'var(--line-strong)',
+          }}
+        />
+      ))}
+    </div>
+  )
+}
+
+function statusTone(status) {
+  if (status === 'running') {
+    return {
+      color: 'var(--california-gold)',
+      border: 'rgba(253, 181, 21, 0.24)',
+    }
+  }
+
+  if (status === 'ready') {
+    return {
+      color: 'var(--green-signal)',
+      border: 'rgba(117, 195, 145, 0.24)',
+    }
+  }
+
+  if (status === 'waiting') {
+    return {
+      color: 'var(--blue-signal)',
+      border: 'rgba(125, 174, 255, 0.22)',
+    }
+  }
+
+  return {
+    color: 'var(--text-secondary)',
+    border: 'var(--line-soft)',
+  }
 }
