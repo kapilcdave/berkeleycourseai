@@ -1,35 +1,33 @@
 import { useEffect, useMemo, useState } from 'react'
 
 const AGENTS = [
-  { id: 'parse-pdf', name: 'Profile', description: 'Parse degree progress PDF', tier: 0 },
-  { id: 'requirements', name: 'Requirements', description: 'Map catalog-year requirements', tier: 1 },
-  { id: 'courses', name: 'Catalog', description: 'Load semester offerings', tier: 1 },
-  { id: 'berkeleytime', name: 'Berkeleytime', description: 'Attach GPA history', tier: 2 },
-  { id: 'rmp', name: 'Prof signal', description: 'Attach professor ratings', tier: 2 },
-  { id: 'scheduler', name: 'Conflicts', description: 'Check schedule overlap', tier: 2 },
-  { id: 'reddit', name: 'Community', description: 'Pull course sentiment', tier: 2 },
-  { id: 'score', name: 'Composer', description: 'Rank and assemble output', tier: 3 },
+  { id: 'parse-pdf', name: 'Student Profile', description: 'Parse degree progress PDF', tier: 0 },
+  { id: 'requirements', name: 'Requirement Planner', description: 'Map unmet requirements', tier: 1 },
+  { id: 'courses', name: 'Course Catalog', description: 'Load live semester offerings', tier: 1 },
+  { id: 'professors', name: 'Professor Signal', description: 'Blend GPA and rating signal', tier: 2 },
+  { id: 'scheduler', name: 'Schedule Check', description: 'Validate timing and load', tier: 2 },
+  { id: 'score', name: 'Schedule Composer', description: 'Assemble the final schedule', tier: 3 },
 ]
 
 const STATUS_META = {
-  idle: { label: 'Queued', color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.02)' },
-  running: { label: 'Running', color: 'var(--california-gold)', background: 'rgba(253,181,21,0.06)' },
-  done: { label: 'Ready', color: 'var(--green-signal)', background: 'rgba(105,196,139,0.06)' },
-  error: { label: 'Issue', color: 'var(--red-signal)', background: 'rgba(222,106,95,0.06)' },
-  skipped: { label: 'Skipped', color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.02)' },
+  idle: { label: 'Queued', color: 'var(--text-secondary)', background: 'var(--surface-soft)', border: 'var(--line-soft)' },
+  running: { label: 'Running', color: 'var(--accent)', background: 'rgba(178, 129, 53, 0.12)', border: 'rgba(178, 129, 53, 0.24)' },
+  done: { label: 'Ready', color: 'var(--success)', background: 'rgba(103, 124, 105, 0.14)', border: 'rgba(103, 124, 105, 0.24)' },
+  error: { label: 'Issue', color: 'var(--danger)', background: 'rgba(150, 86, 72, 0.14)', border: 'rgba(150, 86, 72, 0.24)' },
+  skipped: { label: 'Skipped', color: 'var(--text-secondary)', background: 'var(--surface-soft)', border: 'var(--line-soft)' },
 }
 
-const EXAMPLE_SCHEDULE = [
-  { day: 'Mon', time: '10:00', course: 'CS 188', tag: 'Core', units: '4u', color: 'var(--california-gold)' },
-  { day: 'Tue', time: '12:30', course: 'INFO 159', tag: 'Policy breadth', units: '4u', color: 'var(--cyan-signal)' },
-  { day: 'Wed', time: '14:00', course: 'DATA 140', tag: 'Probability', units: '4u', color: 'var(--blue-signal)' },
-  { day: 'Thu', time: '16:00', course: 'DES INV 15', tag: 'Light breadth', units: '1u', color: 'var(--green-signal)' },
+const TREE = [
+  ['parse-pdf'],
+  ['requirements', 'courses'],
+  ['professors', 'scheduler'],
+  ['score'],
 ]
 
 export default function AgentDashboard({ agentStates, parsedProfile }) {
   const [elapsed, setElapsed] = useState(0)
   const [startTime] = useState(Date.now())
-  const isCompact = useCompactLayout(980)
+  const isCompact = useCompactLayout(920)
 
   useEffect(() => {
     const t = setInterval(() => setElapsed(Math.floor((Date.now() - startTime) / 1000)), 250)
@@ -37,11 +35,11 @@ export default function AgentDashboard({ agentStates, parsedProfile }) {
   }, [startTime])
 
   const counts = useMemo(() => {
-    const statuses = AGENTS.map(agent => agentStates[agent.id]?.status ?? 'idle')
+    const statuses = AGENTS.map((agent) => agentStates[agent.id]?.status ?? 'idle')
     return {
-      done: statuses.filter(status => status === 'done').length,
-      running: statuses.filter(status => status === 'running').length,
-      issues: statuses.filter(status => status === 'error').length,
+      done: statuses.filter((status) => status === 'done').length,
+      running: statuses.filter((status) => status === 'running').length,
+      issues: statuses.filter((status) => status === 'error').length,
       total: AGENTS.length,
     }
   }, [agentStates])
@@ -51,428 +49,410 @@ export default function AgentDashboard({ agentStates, parsedProfile }) {
   const doubleCountCount = agentStates.courses?.doubleCountCount ?? 0
 
   return (
-    <div style={{ maxWidth: 1180, margin: '0 auto', paddingTop: 24 }}>
-      <section style={{
-        border: '1px solid var(--border)',
-        borderRadius: 22,
-        background: 'linear-gradient(180deg, rgba(16, 29, 43, 0.92), rgba(9, 18, 28, 0.98))',
-        boxShadow: 'var(--shadow-panel)',
-        padding: isCompact ? 18 : 20,
-      }}>
-        <div style={{
+    <div style={{ maxWidth: 1120, margin: '0 auto', paddingTop: isCompact ? 28 : 44 }}>
+      <section
+        style={{
+          textAlign: 'center',
+          marginBottom: 28,
+        }}
+      >
+        <div
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
+            padding: '7px 12px',
+            borderRadius: 999,
+            background: 'var(--surface-soft)',
+            border: '1px solid var(--line-soft)',
+            marginBottom: 18,
+          }}
+        >
+          <span
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              background: counts.running > 0 ? 'var(--accent)' : 'var(--success)',
+              animation: counts.running > 0 ? 'pulse-soft 1.5s infinite' : 'none',
+            }}
+          />
+          <span
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: '0.68rem',
+              color: 'var(--text-secondary)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+            }}
+          >
+            Multi-agent planner
+          </span>
+        </div>
+
+        <h1
+          style={{
+            fontFamily: 'var(--font-display)',
+            fontSize: 'clamp(2.2rem, 5vw, 4.5rem)',
+            lineHeight: 0.96,
+            letterSpacing: '-0.05em',
+            color: 'var(--text-primary)',
+            maxWidth: 820,
+            margin: '0 auto 16px',
+          }}
+        >
+          optimize your class schedule with ai agents
+        </h1>
+
+        <p
+          style={{
+            maxWidth: 700,
+            margin: '0 auto',
+            fontSize: '1rem',
+            lineHeight: 1.7,
+            color: 'var(--text-secondary)',
+          }}
+        >
+          BearCourses reads your progress report, filters the catalog, attaches quality signals, and composes a cleaner semester plan.
+        </p>
+      </section>
+
+      <section
+        style={{
           display: 'grid',
-          gridTemplateColumns: isCompact ? '1fr' : 'minmax(0, 1.45fr) 320px',
-          gap: 18,
-          alignItems: 'start',
-        }}>
-          <div>
-            <div style={{
+          gridTemplateColumns: isCompact ? 'repeat(2, minmax(0, 1fr))' : 'repeat(4, minmax(0, 1fr))',
+          gap: 12,
+          marginBottom: 28,
+        }}
+      >
+        <MinimalStat label="Progress" value={`${progress}%`} />
+        <MinimalStat label="Elapsed" value={`${elapsed}s`} />
+        <MinimalStat label="Candidates" value={candidateCount || '...'} />
+        <MinimalStat label="Double counts" value={String(doubleCountCount)} />
+      </section>
+
+      {parsedProfile && (
+        <section
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            marginBottom: 30,
+          }}
+        >
+          <div
+            style={{
               display: 'flex',
-              alignItems: 'flex-end',
-              justifyContent: 'space-between',
-              gap: 16,
+              alignItems: 'center',
+              gap: 12,
               flexWrap: 'wrap',
-              marginBottom: 14,
-            }}>
-              <div>
-                <div style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '0.6rem',
-                  color: 'var(--cyan-signal)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.14em',
-                  marginBottom: 6,
-                }}>
-                  Live multi-agent graph
-                </div>
-                <h2 style={{
-                  fontFamily: 'var(--font-display)',
-                  fontSize: 'clamp(1.7rem, 3vw, 2.4rem)',
-                  letterSpacing: '-0.04em',
-                  lineHeight: 1,
-                  color: 'var(--text-primary)',
-                }}>
-                  Requirement-aware schedule assembly
-                </h2>
-              </div>
-
-              <div style={{
-                display: 'flex',
-                gap: 8,
-                flexWrap: 'wrap',
-                justifyContent: isCompact ? 'flex-start' : 'flex-end',
-              }}>
-                <SummaryPill label="Elapsed" value={`${elapsed}s`} />
-                <SummaryPill label="Ready" value={`${counts.done}/${counts.total}`} tone="var(--green-signal)" />
-                <SummaryPill label="Candidates" value={candidateCount || '...'} tone="var(--blue-signal)" />
-                <SummaryPill label="Double" value={doubleCountCount || '0'} tone="var(--cyan-signal)" />
-              </div>
-            </div>
-
-            <div style={{
-              height: 6,
+              justifyContent: 'center',
+              padding: '10px 16px',
               borderRadius: 999,
-              background: 'rgba(255,255,255,0.05)',
-              overflow: 'hidden',
-              marginBottom: 14,
-            }}>
-              <div style={{
-                width: `${progress}%`,
-                height: '100%',
-                borderRadius: 999,
-                background: 'linear-gradient(90deg, rgba(253,181,21,1), rgba(126,215,208,0.94))',
-                transition: 'width 0.35s ease',
-              }} />
-            </div>
-
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: isCompact ? '1fr' : 'repeat(3, minmax(0, 1fr))',
-              gap: 10,
-              marginBottom: 16,
-            }}>
-              <CompactStat label="Pipeline" value={counts.running > 0 ? `${counts.running} active` : `${progress}% complete`} />
-              <CompactStat label="Issues" value={String(counts.issues)} />
-              <CompactStat
-                label="Profile"
-                value={parsedProfile ? `${parsedProfile.major} · ${parsedProfile.catalogYear}` : 'Waiting for intake'}
-              />
-            </div>
-
-            <div style={{
-              border: '1px solid rgba(255,255,255,0.06)',
-              borderRadius: 16,
-              background: 'rgba(255,255,255,0.025)',
-              padding: '12px 14px',
-              marginBottom: 14,
-            }}>
-              <div style={{
+              background: 'var(--surface-soft)',
+              border: '1px solid var(--line-soft)',
+            }}
+          >
+            <div
+              style={{
+                width: 34,
+                height: 34,
+                borderRadius: '50%',
+                display: 'grid',
+                placeItems: 'center',
+                background: 'rgba(178, 129, 53, 0.16)',
+                color: 'var(--accent)',
                 fontFamily: 'var(--font-mono)',
-                fontSize: '0.58rem',
+                fontSize: '0.74rem',
+              }}
+            >
+              AI
+            </div>
+            <span style={{ fontSize: '0.92rem', color: 'var(--text-primary)' }}>{parsedProfile.major}</span>
+            <span style={{ color: 'var(--text-secondary)' }}>catalog {parsedProfile.catalogYear}</span>
+            <span style={{ color: 'var(--text-secondary)' }}>{parsedProfile.completedUnits} units completed</span>
+          </div>
+        </section>
+      )}
+
+      <section
+        style={{
+          border: '1px solid var(--line-soft)',
+          borderRadius: 28,
+          background: 'var(--surface)',
+          padding: isCompact ? '18px 14px 22px' : '28px 24px 30px',
+          boxShadow: 'var(--shadow-panel)',
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'baseline',
+            gap: 16,
+            flexWrap: 'wrap',
+            marginBottom: 20,
+          }}
+        >
+          <div>
+            <div
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: '0.66rem',
                 color: 'var(--text-secondary)',
                 textTransform: 'uppercase',
-                letterSpacing: '0.12em',
-                marginBottom: 6,
-              }}>
-                What the graph is doing
-              </div>
-              <div style={{
-                fontSize: '0.84rem',
-                color: 'var(--text-secondary)',
-                lineHeight: 1.65,
-              }}>
-                Intake normalizes the PDF, planning agents prune the catalog, evidence agents attach quality and conflict signals, and the composer turns the surviving candidates into a schedule-shaped result.
-              </div>
+                letterSpacing: '0.08em',
+                marginBottom: 8,
+              }}
+            >
+              System map
             </div>
-
-            <div style={{ display: 'grid', gap: 10 }}>
-              {[0, 1, 2, 3].map((tier) => (
-                <TierRow
-                  key={tier}
-                  tier={tier}
-                  agents={AGENTS.filter(agent => agent.tier === tier)}
-                  agentStates={agentStates}
-                  isCompact={isCompact}
-                />
-              ))}
-            </div>
+            <p style={{ color: 'var(--text-secondary)', lineHeight: 1.7, maxWidth: 620 }}>
+              Six linked agents move from intake to planning, validate quality and conflicts, then collapse into one final schedule recommendation.
+            </p>
           </div>
+          <div
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: '0.7rem',
+              color: counts.issues > 0 ? 'var(--danger)' : 'var(--text-secondary)',
+            }}
+          >
+            {counts.done}/{counts.total} complete
+          </div>
+        </div>
 
-          <aside style={{
-            position: isCompact ? 'static' : 'sticky',
-            top: 92,
-            display: 'grid',
-            gap: 12,
-          }}>
-            <MiniPanel title="Run state">
-              <div style={{ display: 'grid', gap: 8 }}>
-                <MiniMetric label="Running" value={String(counts.running)} tone="var(--california-gold)" />
-                <MiniMetric label="Ready" value={String(counts.done)} tone="var(--green-signal)" />
-                <MiniMetric label="Issues" value={String(counts.issues)} tone="var(--red-signal)" />
-              </div>
-            </MiniPanel>
-
-            <MiniPanel title="Example schedule">
-              <div style={{ display: 'grid', gap: 8 }}>
-                {EXAMPLE_SCHEDULE.map((item) => (
-                  <div key={item.day + item.time + item.course} style={{
-                    border: '1px solid rgba(255,255,255,0.06)',
-                    borderRadius: 14,
-                    background: 'rgba(255,255,255,0.02)',
-                    padding: '10px 12px',
-                    display: 'grid',
-                    gridTemplateColumns: '38px 50px 1fr auto',
-                    gap: 8,
-                    alignItems: 'center',
-                  }}>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.58rem', color: 'var(--text-secondary)' }}>{item.day}</span>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.58rem', color: 'var(--text-secondary)' }}>{item.time}</span>
-                    <div>
-                      <div style={{ fontSize: '0.82rem', color: item.color, marginBottom: 2 }}>{item.course}</div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.56rem', color: 'var(--text-secondary)' }}>{item.tag}</div>
-                    </div>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.58rem', color: 'var(--text-primary)' }}>{item.units}</span>
-                  </div>
-                ))}
-              </div>
-            </MiniPanel>
-          </aside>
+        <div style={{ display: 'grid', gap: isCompact ? 10 : 14 }}>
+          {TREE.map((row, index) => (
+            <TreeRow
+              key={row.join('-')}
+              row={row}
+              index={index}
+              isCompact={isCompact}
+              agentStates={agentStates}
+            />
+          ))}
         </div>
       </section>
     </div>
   )
 }
 
-function TierRow({ tier, agents, agentStates, isCompact }) {
-  const labels = ['Intake', 'Planning', 'Evidence', 'Assembly']
+function TreeRow({ row, index, isCompact, agentStates }) {
+  const columns = isCompact ? Math.min(2, row.length) : row.length
 
   return (
-    <div style={{
-      display: 'grid',
-      gridTemplateColumns: isCompact ? '1fr' : '100px 1fr',
-      gap: 10,
-      alignItems: 'start',
-    }}>
-      <div style={{
-        paddingTop: isCompact ? 0 : 10,
-        fontFamily: 'var(--font-mono)',
-        fontSize: '0.58rem',
-        color: 'var(--text-secondary)',
-        textTransform: 'uppercase',
-        letterSpacing: '0.14em',
-      }}>
-        Tier {tier}
-        <div style={{ marginTop: 4, color: 'var(--text-primary)', letterSpacing: '0.06em' }}>
-          {labels[tier]}
-        </div>
-      </div>
-
-      <div style={{
-        position: 'relative',
-        border: '1px solid rgba(255,255,255,0.06)',
-        borderRadius: 18,
-        background: 'rgba(255,255,255,0.02)',
-        padding: 10,
-      }}>
-        <div style={{
-          position: 'absolute',
-          left: 16,
-          top: 18,
-          bottom: 18,
-          width: 1,
-          background: 'rgba(255,255,255,0.08)',
-        }} />
-
-        <div style={{ display: 'grid', gap: 8 }}>
-          {agents.map((agent) => (
-            <AgentRow key={agent.id} agent={agent} state={agentStates[agent.id] || { status: 'idle' }} />
-          ))}
-        </div>
+    <div style={{ display: 'grid', gap: isCompact ? 10 : 14, justifyItems: 'center' }}>
+      {index > 0 && <Connector compact={isCompact} />}
+      <div
+        style={{
+          width: '100%',
+          display: 'grid',
+          gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+          justifyItems: 'center',
+          gap: isCompact ? 10 : 14,
+        }}
+      >
+        {row.map((id) => {
+          const agent = AGENTS.find((item) => item.id === id)
+          return (
+            <AgentNode
+              key={id}
+              agent={agent}
+              state={agentStates[id] || { status: 'idle' }}
+            />
+          )
+        })}
       </div>
     </div>
   )
 }
 
-function AgentRow({ agent, state }) {
+function Connector({ compact }) {
+  return (
+    <div
+      style={{
+        position: 'relative',
+        width: compact ? '84%' : '92%',
+        height: compact ? 24 : 34,
+      }}
+    >
+      <div
+        style={{
+          position: 'absolute',
+          left: '50%',
+          top: 0,
+          width: 1,
+          height: compact ? 10 : 14,
+          background: 'var(--line-strong)',
+          transform: 'translateX(-50%)',
+        }}
+      />
+      <div
+        style={{
+          position: 'absolute',
+          left: '12%',
+          right: '12%',
+          top: compact ? 10 : 14,
+          height: 1,
+          background: 'var(--line-strong)',
+        }}
+      />
+      <div
+        style={{
+          position: 'absolute',
+          left: '12%',
+          bottom: 0,
+          width: 1,
+          height: compact ? 10 : 14,
+          background: 'var(--line-strong)',
+        }}
+      />
+      <div
+        style={{
+          position: 'absolute',
+          right: '12%',
+          bottom: 0,
+          width: 1,
+          height: compact ? 10 : 14,
+          background: 'var(--line-strong)',
+        }}
+      />
+    </div>
+  )
+}
+
+function AgentNode({ agent, state }) {
   const meta = STATUS_META[state.status] ?? STATUS_META.idle
 
   return (
-    <div style={{
-      display: 'grid',
-      gridTemplateColumns: '12px minmax(0, 1fr) auto',
-      gap: 10,
-      alignItems: 'start',
-      borderRadius: 14,
-      background: meta.background,
-      padding: '10px 10px',
-    }}>
-      <span style={{
-        width: 10,
-        height: 10,
-        borderRadius: '50%',
-        background: meta.color,
-        marginTop: 4,
-        animation: state.status === 'running' ? 'pulse-soft 1.4s infinite' : 'none',
-      }} />
-
-      <div style={{ minWidth: 0 }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'baseline',
-          gap: 8,
-          flexWrap: 'wrap',
-          marginBottom: 3,
-        }}>
-          <span style={{ fontSize: '0.84rem', color: 'var(--text-primary)' }}>{agent.name}</span>
-          <span style={{
+    <div
+      style={{
+        width: '100%',
+        maxWidth: 220,
+        minHeight: 136,
+        borderRadius: 22,
+        padding: '16px 16px 14px',
+        background: meta.background,
+        border: `1px solid ${meta.border}`,
+        display: 'grid',
+        gap: 10,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+        <div
+          style={{
+            width: 34,
+            height: 34,
+            borderRadius: '50%',
+            display: 'grid',
+            placeItems: 'center',
+            background: 'rgba(255,255,255,0.68)',
+            color: meta.color,
             fontFamily: 'var(--font-mono)',
-            fontSize: '0.56rem',
-            color: 'var(--text-secondary)',
+            fontSize: '0.7rem',
+          }}
+        >
+          {agent.id === 'parse-pdf' ? ':-)' : agent.name.slice(0, 2).toUpperCase()}
+        </div>
+        <span
+          style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: '0.58rem',
+            color: meta.color,
             textTransform: 'uppercase',
-            letterSpacing: '0.1em',
-          }}>
-            {agent.description}
-          </span>
-        </div>
-
-        <div style={{
-          fontFamily: 'var(--font-mono)',
-          fontSize: '0.6rem',
-          color: state.status === 'error' ? 'var(--text-secondary)' : 'var(--text-secondary)',
-          lineHeight: 1.5,
-        }}>
-          {state.message || defaultMessage(state.status)}
-        </div>
-
-        {(state.count != null || state.candidateCount != null || state.doubleCountCount > 0) && (
-          <div style={{
-            display: 'flex',
-            gap: 6,
-            flexWrap: 'wrap',
-            marginTop: 6,
-          }}>
-            {state.count != null && <Tag text={`${state.count}`} />}
-            {state.candidateCount != null && <Tag text={`${state.candidateCount} cand.`} />}
-            {state.doubleCountCount > 0 && <Tag text={`${state.doubleCountCount} dbl`} />}
-          </div>
-        )}
+            letterSpacing: '0.08em',
+          }}
+        >
+          {meta.label}
+        </span>
       </div>
 
-      <span style={{
+      <div>
+        <div
+          style={{
+            fontSize: '0.96rem',
+            color: 'var(--text-primary)',
+            marginBottom: 6,
+            lineHeight: 1.25,
+          }}
+        >
+          {agent.name}
+        </div>
+        <div
+          style={{
+            fontSize: '0.8rem',
+            color: 'var(--text-secondary)',
+            lineHeight: 1.55,
+          }}
+        >
+          {state.message || agent.description}
+        </div>
+      </div>
+
+      {(state.count != null || state.candidateCount != null || state.doubleCountCount > 0) && (
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {state.count != null && <NodeTag text={`${state.count}`} />}
+          {state.candidateCount != null && <NodeTag text={`${state.candidateCount} candidates`} />}
+          {state.doubleCountCount > 0 && <NodeTag text={`${state.doubleCountCount} doubles`} />}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function MinimalStat({ label, value }) {
+  return (
+    <div
+      style={{
+        border: '1px solid var(--line-soft)',
+        borderRadius: 20,
+        background: 'var(--surface-soft)',
+        padding: '14px 16px',
+      }}
+    >
+      <div
+        style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: '0.62rem',
+          color: 'var(--text-secondary)',
+          textTransform: 'uppercase',
+          letterSpacing: '0.08em',
+          marginBottom: 8,
+        }}
+      >
+        {label}
+      </div>
+      <div
+        style={{
+          fontFamily: 'var(--font-display)',
+          fontSize: '1.7rem',
+          lineHeight: 1,
+          letterSpacing: '-0.04em',
+          color: 'var(--text-primary)',
+        }}
+      >
+        {value}
+      </div>
+    </div>
+  )
+}
+
+function NodeTag({ text }) {
+  return (
+    <span
+      style={{
         fontFamily: 'var(--font-mono)',
         fontSize: '0.56rem',
-        color: meta.color,
-        textTransform: 'uppercase',
-        letterSpacing: '0.12em',
-        whiteSpace: 'nowrap',
-        paddingTop: 2,
-      }}>
-        {meta.label}
-      </span>
-    </div>
-  )
-}
-
-function MiniPanel({ title, children }) {
-  return (
-    <div style={{
-      border: '1px solid rgba(255,255,255,0.06)',
-      borderRadius: 18,
-      background: 'rgba(255,255,255,0.025)',
-      padding: 14,
-    }}>
-      <div style={{
-        fontFamily: 'var(--font-mono)',
-        fontSize: '0.58rem',
         color: 'var(--text-secondary)',
-        textTransform: 'uppercase',
-        letterSpacing: '0.14em',
-        marginBottom: 10,
-      }}>
-        {title}
-      </div>
-      {children}
-    </div>
-  )
-}
-
-function SummaryPill({ label, value, tone = 'var(--california-gold)' }) {
-  return (
-    <div style={{
-      borderRadius: 999,
-      border: '1px solid rgba(255,255,255,0.06)',
-      background: 'rgba(255,255,255,0.025)',
-      padding: '8px 10px',
-      minWidth: 88,
-    }}>
-      <div style={{
-        fontFamily: 'var(--font-mono)',
-        fontSize: '0.52rem',
-        color: 'var(--text-secondary)',
-        textTransform: 'uppercase',
-        letterSpacing: '0.12em',
-        marginBottom: 4,
-      }}>
-        {label}
-      </div>
-      <div style={{
-        fontFamily: 'var(--font-display)',
-        fontSize: '1.1rem',
-        color: tone,
-        lineHeight: 1,
-      }}>
-        {value}
-      </div>
-    </div>
-  )
-}
-
-function CompactStat({ label, value }) {
-  return (
-    <div style={{
-      border: '1px solid rgba(255,255,255,0.06)',
-      borderRadius: 14,
-      background: 'rgba(255,255,255,0.025)',
-      padding: '10px 12px',
-    }}>
-      <div style={{
-        fontFamily: 'var(--font-mono)',
-        fontSize: '0.54rem',
-        color: 'var(--text-secondary)',
-        textTransform: 'uppercase',
-        letterSpacing: '0.12em',
-        marginBottom: 5,
-      }}>
-        {label}
-      </div>
-      <div style={{ fontSize: '0.82rem', color: 'var(--text-primary)', lineHeight: 1.35 }}>
-        {value}
-      </div>
-    </div>
-  )
-}
-
-function MiniMetric({ label, value, tone }) {
-  return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      borderRadius: 12,
-      padding: '8px 10px',
-      background: 'rgba(255,255,255,0.02)',
-      border: '1px solid rgba(255,255,255,0.05)',
-    }}>
-      <span style={{ fontSize: '0.76rem', color: 'var(--text-primary)' }}>{label}</span>
-      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', color: tone }}>{value}</span>
-    </div>
-  )
-}
-
-function Tag({ text }) {
-  return (
-    <span style={{
-      fontFamily: 'var(--font-mono)',
-      fontSize: '0.52rem',
-      color: 'var(--text-secondary)',
-      textTransform: 'uppercase',
-      letterSpacing: '0.08em',
-      border: '1px solid rgba(255,255,255,0.06)',
-      borderRadius: 999,
-      padding: '3px 7px',
-      background: 'rgba(255,255,255,0.03)',
-    }}>
+        borderRadius: 999,
+        padding: '4px 8px',
+        background: 'rgba(255,255,255,0.62)',
+        border: '1px solid var(--line-soft)',
+      }}
+    >
       {text}
     </span>
   )
-}
-
-function defaultMessage(status) {
-  if (status === 'running') return 'Processing current stage.'
-  if (status === 'done') return 'Stage completed.'
-  if (status === 'error') return 'Signal unavailable. Continuing.'
-  if (status === 'skipped') return 'Skipped by configuration.'
-  return 'Waiting on upstream stage.'
 }
 
 function useCompactLayout(breakpoint) {

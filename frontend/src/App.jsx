@@ -59,7 +59,7 @@ export default function App() {
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Header phase={phase} parsedProfile={parsedProfile} onReset={handleReset} />
 
-      <main style={{ flex: 1, padding: '0 24px 48px' }}>
+      <main style={{ flex: 1, padding: '0 24px 56px' }}>
         {phase === PHASE.INPUT && (
           <InputPanel onSubmit={handleSubmit} errorMessage={submitError} />
         )}

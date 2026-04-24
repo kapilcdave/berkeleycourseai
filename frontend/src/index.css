@@ -7,23 +7,30 @@
 :root {
   --berkeley-blue: #003262;
   --california-gold: #FDB515;
-  --gold-dim: #c48f0a;
+  --gold-dim: #c79429;
   --gold-glow: rgba(253, 181, 21, 0.15);
-  --bg-base: #061018;
-  --bg-panel: #0d1823;
-  --bg-card: #122131;
-  --bg-card-hover: #192c40;
-  --bg-elevated: rgba(16, 29, 43, 0.92);
+  --bg-base: #071019;
+  --bg-panel: #101a24;
+  --bg-card: #142230;
+  --bg-card-hover: #1b2c3d;
+  --bg-elevated: rgba(10, 19, 29, 0.92);
   --border: rgba(253, 181, 21, 0.12);
-  --border-bright: rgba(253, 181, 21, 0.35);
+  --border-bright: rgba(253, 181, 21, 0.28);
   --text-primary: #f4efe2;
-  --text-secondary: #9fafbf;
-  --text-mono: #b7dbc6;
-  --green-signal: #69c48b;
-  --red-signal: #de6a5f;
-  --blue-signal: #7db4ff;
-  --cyan-signal: #7ed7d0;
-  --shadow-panel: 0 24px 60px rgba(0, 0, 0, 0.28);
+  --text-secondary: #9eaab8;
+  --text-mono: #b8d2c4;
+  --green-signal: #75c391;
+  --red-signal: #d97b67;
+  --blue-signal: #7daeff;
+  --cyan-signal: #82d0c8;
+  --accent: #FDB515;
+  --success: #75c391;
+  --danger: #d97b67;
+  --surface: rgba(16, 26, 36, 0.74);
+  --surface-soft: rgba(255, 255, 255, 0.04);
+  --line-soft: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.18);
+  --shadow-panel: 0 28px 60px rgba(0, 0, 0, 0.32);
   --font-display: 'DM Serif Display', Georgia, serif;
   --font-body: 'Instrument Sans', sans-serif;
   --font-mono: 'DM Mono', 'Courier New', monospace;
@@ -37,29 +44,18 @@ html {
 body {
   background: var(--bg-base);
   background-image:
-    radial-gradient(circle at top left, rgba(125, 180, 255, 0.14), transparent 32%),
-    radial-gradient(circle at top right, rgba(253, 181, 21, 0.12), transparent 28%),
-    linear-gradient(180deg, #071019 0%, #09131d 30%, #061018 100%);
+    radial-gradient(circle at top left, rgba(125, 174, 255, 0.14), transparent 30%),
+    radial-gradient(circle at top right, rgba(253, 181, 21, 0.13), transparent 26%),
+    linear-gradient(180deg, #071019 0%, #09131d 48%, #061018 100%);
   color: var(--text-primary);
   font-family: var(--font-body);
   min-height: 100vh;
   overflow-x: hidden;
 }
 
-/* Grain texture overlay */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
-  pointer-events: none;
-  z-index: 9999;
-  opacity: 0.4;
-}
-
 /* Scrollbar */
 ::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: var(--bg-base); }
+::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); }
 ::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 2px; }
 
 /* Animations */
